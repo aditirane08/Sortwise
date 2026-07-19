@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sortwise — Know your bin before you drop it</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pine:#122E1E;
+    --pine-2:#1B4029;
+    --paper:#EFF2E8;
+    --paper-2:#E3E8D9;
+    --ink:#12180F;
+    --moss:#5C7A55;
+    --lime:#A8D14A;
+    --wet:#2ecc71;
+    --dry:#3498db;
+    --recycle:#f1c40f;
+    --hazard:#e74c3c;
+    --general:#2b2f28;
+    --card-1:#F2F5EA;
+    --card-2:#E6ECD9;
+    --font-display:'Fraunces', serif;
+    --font-body:'Manrope', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:var(--font-body);
+    background:transparent;
+    color:var(--ink);
+    overflow-x:hidden;
+  }
+
+  /* ---------- LIVING BACKGROUND SCENE ---------- */
+  .bg-scene{
+    position:fixed; inset:0; z-index:-2; overflow:hidden;
+    background:
+      radial-gradient(circle at 18% 12%, #dfe9cd 0%, transparent 50%),
+      radial-gradient(circle at 82% 78%, #d2e2c6 0%, transparent 50%),
+      var(--paper);
+    transition:transform 0.25s ease-out;
+    will-change:transform;
+  }
+  .blob{position:absolute; border-radius:50%; filter:blur(75px); will-change:transform;}
+  .blob-a{width:440px; height:440px; top:-110px; left:-120px; opacity:0.4;
+    background:radial-gradient(circle, var(--lime), transparent 70%);
+    animation:driftA 24s ease-in-out infinite;}
+  .blob-b{width:540px; height:540px; top:32%; right:-180px; opacity:0.32;
+    background:radial-gradient(circle, var(--moss), transparent 70%);
+    animation:driftB 30s ease-in-out infinite;}
+  .blob-c{width:380px; height:380px; bottom:-110px; left:12%; opacity:0.28;
+    background:radial-gradient(circle, var(--pine-2), transparent 70%);
+    animation:driftC 28s ease-in-out infinite;}
+  .blob-d{width:280px; height:280px; bottom:18%; right:16%; opacity:0.16;
+    background:radial-gradient(circle, var(--recycle), transparent 70%);
+    animation:driftA 22s ease-in-out infinite reverse;}
+  @keyframes driftA{0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(50px,60px) scale(1.1);}}
+  @keyframes driftB{0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(-60px,40px) scale(0.94);}}
+  @keyframes driftC{0%,100%{transform:translate(0,0) scale(1);} 50%{transform:translate(35px,-45px) scale(1.06);}}
+  .grain{
+    position:absolute; inset:-10%; opacity:0.05; mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  @media (prefers-reduced-motion: reduce){
+    .blob{animation:none !important;}
+    .bg-scene{transition:none !important;}
+  }
+  img{max-width:100%;display:block;}
+  a{text-decoration:none;color:inherit;}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;}
+  ul{list-style:none;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 32px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+  }
+
+  :focus-visible{outline:3px solid var(--lime); outline-offset:3px;}
+
+  /* ---------- NAVBAR ---------- */
+  header{
+    position:sticky; top:0; z-index:100;
+    background:rgba(18,46,30,0.28);
+    backdrop-filter:blur(18px) saturate(160%);
+    -webkit-backdrop-filter:blur(18px) saturate(160%);
+    border-bottom:1px solid rgba(239,242,232,0.1);
+    transition:background 0.3s ease, box-shadow 0.3s ease;
+  }
+  header.scrolled{
+    background:rgba(18,46,30,0.78);
+    box-shadow:0 8px 30px rgba(0,0,0,0.15);
+  }
+  .nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 32px;
+  }
+  .logo{
+    font-family:var(--font-display);
+    font-size:24px; font-weight:600;
+    display:flex; align-items:center; gap:8px;
+    color:var(--paper);
+  }
+  .logo-dot{
+    width:10px; height:10px; border-radius:50%;
+    background:var(--lime);
+    box-shadow:0 0 0 4px rgba(168,209,74,0.25);
+  }
+  .nav-links{display:flex; gap:32px; font-size:15px; font-weight:600; color:var(--paper);}
+  .nav-links a{opacity:0.8; transition:opacity 0.2s;}
+  .nav-links a:hover{opacity:1;}
+  .nav-cta{
+    background:var(--lime); color:var(--pine);
+    padding:10px 20px; border-radius:100px;
+    font-size:14px; font-weight:700;
+    transition:transform 0.2s, background 0.2s;
+  }
+  .nav-cta:hover{background:#bce369; transform:translateY(-2px);}
+  .burger{display:none; flex-direction:column; gap:5px; padding:6px;}
+  .burger span{width:22px; height:2px; background:var(--paper);}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    padding:80px 32px 40px;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(168,209,74,0.16) 0%, transparent 45%),
+      radial-gradient(circle at 100% 100%, rgba(52,152,219,0.12) 0%, transparent 50%),
+      linear-gradient(165deg, #1c4a2e 0%, var(--pine) 55%, #0c2015 100%);
+    color:var(--paper);
+    overflow:hidden;
+  }
+  .hero-inner{
+    max-width:1180px; margin:0 auto;
+    display:grid; grid-template-columns:1.1fr 0.9fr; gap:40px;
+    align-items:center;
+  }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:var(--font-mono);
+    font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
+    background:rgba(168,209,74,0.15);
+    border:1px solid rgba(168,209,74,0.35);
+    color:var(--lime);
+    padding:6px 14px; border-radius:100px;
+    margin-bottom:24px;
+  }
+  .eyebrow-dot{width:6px;height:6px;border-radius:50%;background:var(--lime); animation:blink 2s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+  .hero h1{
+    font-family:var(--font-display);
+    font-size:clamp(38px, 5.2vw, 64px);
+    line-height:1.05;
+    font-weight:600;
+    max-width:640px;
+  }
+  .hero h1 em{font-style:italic; color:var(--lime); font-weight:500;}
+  .hero p.lede{
+    margin-top:20px; font-size:18px; line-height:1.6;
+    color:rgba(239,242,232,0.75); max-width:480px;
+  }
+  .hero-actions{display:flex; gap:14px; margin-top:34px; flex-wrap:wrap;}
+  .btn-primary{
+    background:var(--lime); color:var(--pine);
+    padding:15px 26px; border-radius:100px;
+    font-weight:800; font-size:15px;
+    transition:transform 0.2s, box-shadow 0.2s;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .btn-primary:hover{transform:translateY(-3px); box-shadow:0 10px 24px rgba(168,209,74,0.3);}
+  .btn-ghost{
+    border:1px solid rgba(239,242,232,0.3);
+    color:var(--paper);
+    padding:15px 26px; border-radius:100px;
+    font-weight:700; font-size:15px;
+    transition:background 0.2s;
+  }
+  .btn-ghost:hover{background:rgba(239,242,232,0.08);}
+
+  /* sorting belt signature */
+  .belt-box{
+    position:relative;
+    background:var(--pine-2);
+    border-radius:24px;
+    padding:26px;
+    border:1px solid rgba(239,242,232,0.1);
+  }
+  .belt-title{
+    font-family:var(--font-mono); font-size:12px;
+    color:rgba(239,242,232,0.55); text-transform:uppercase; letter-spacing:0.06em;
+    margin-bottom:16px;
+  }
+  .belt-track{
+    position:relative;
+    height:70px;
+    background:rgba(0,0,0,0.2);
+    border-radius:12px;
+    overflow:hidden;
+    margin-bottom:20px;
+  }
+  .belt-track::before{
+    content:'';
+    position:absolute; inset:0;
+    background-image:repeating-linear-gradient(90deg, rgba(239,242,232,0.06) 0 2px, transparent 2px 26px);
+  }
+  .item-chip{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:38px; height:38px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px;
+    animation:travel 6s linear infinite;
+  }
+  .bins-row{display:grid; grid-template-columns:repeat(5,1fr); gap:8px;}
+  .bin{
+    border-radius:12px; padding:12px 8px; text-align:center;
+    font-family:var(--font-mono); font-size:11px; font-weight:600;
+    color:rgba(18,24,15,0.75);
+    position:relative;
+  }
+  .bin span{display:block; font-size:16px; margin-bottom:4px;}
+  .bin.wet{background:var(--wet);}
+  .bin.dry{background:var(--dry); color:white;}
+  .bin.recycle{background:var(--recycle);}
+  .bin.hazard{background:var(--hazard); color:white;}
+  .bin.general{background:var(--general); color:var(--paper);}
+  .bin.pulse{animation:pulseBin 0.5s ease;}
+  @keyframes pulseBin{0%{transform:scale(1);} 50%{transform:scale(1.08); box-shadow:0 0 0 6px rgba(255,255,255,0.15);} 100%{transform:scale(1);}}
+
+  @keyframes travel{
+    0%{left:-40px;}
+    85%{left:calc(100% - 40px);}
+    100%{left:calc(100% - 40px); opacity:0;}
+  }
+
+  /* ---------- STATS STRIP ---------- */
+  .stats-strip{
+    background:rgba(227,232,217,0.55);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(18,24,15,0.08);
+  }
+  .stats-grid{
+    display:grid; grid-template-columns:repeat(4,1fr);
+    padding:36px 0;
+  }
+  .stat{text-align:center; border-right:1px solid rgba(18,24,15,0.1);}
+  .stat:last-child{border-right:none;}
+  .stat b{
+    font-family:var(--font-mono); font-size:32px; font-weight:600;
+    display:block; color:var(--pine-2);
+  }
+  .stat span{font-size:13px; color:var(--moss); font-weight:600;}
+
+  /* ---------- SECTION HEADERS ---------- */
+  .sec{padding:100px 32px;}
+  .sec-head{max-width:600px; margin-bottom:56px;}
+  .sec-tag{
+    font-family:var(--font-mono); font-size:12px; text-transform:uppercase;
+    letter-spacing:0.08em; color:var(--moss); font-weight:600;
+    margin-bottom:14px; display:block;
+  }
+  .sec-head h2{
+    font-family:var(--font-display); font-size:clamp(28px,3.4vw,42px);
+    font-weight:600; line-height:1.15;
+  }
+  .sec-head p{margin-top:14px; color:#4a5245; font-size:16px; line-height:1.6;}
+
+  /* ---------- HOW IT WORKS ---------- */
+  .steps{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:24px;
+    max-width:1180px; margin:0 auto;
+  }
+  .step-card{
+    background:linear-gradient(160deg, var(--card-1), var(--card-2));
+    border-radius:20px; padding:32px 26px;
+    border:1px solid rgba(18,46,30,0.08);
+    box-shadow:0 6px 20px rgba(18,46,30,0.05);
+    transition:transform 0.25s, box-shadow 0.25s;
+  }
+  .step-card:hover{transform:translateY(-6px); box-shadow:0 16px 30px rgba(18,46,30,0.12);}
+  .step-num{
+    font-family:var(--font-mono); font-size:13px; color:var(--lime);
+    background:var(--pine); width:34px; height:34px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:18px; font-weight:600;
+  }
+  .step-card h3{font-family:var(--font-display); font-size:20px; font-weight:600; margin-bottom:10px;}
+  .step-card p{font-size:14.5px; color:#5a6152; line-height:1.6;}
+
+  /* ---------- BIN GUIDE ---------- */
+  .bin-guide{display:grid; grid-template-columns:repeat(5,1fr); gap:18px; max-width:1180px; margin:0 auto;}
+  .guide-card{
+    background:linear-gradient(160deg, var(--card-1), var(--card-2));
+    border-radius:18px; padding:22px 18px;
+    border:1px solid rgba(18,46,30,0.08);
+    box-shadow:0 6px 18px rgba(18,46,30,0.05);
+    transition:transform 0.25s, box-shadow 0.25s;
+    border-top:5px solid var(--wet);
+  }
+  .guide-card:hover{transform:translateY(-5px); box-shadow:0 14px 24px rgba(18,46,30,0.1);}
+  .guide-card.gc-dry{border-top-color:var(--dry);}
+  .guide-card.gc-recycle{border-top-color:var(--recycle);}
+  .guide-card.gc-hazard{border-top-color:var(--hazard);}
+  .guide-card.gc-general{border-top-color:var(--general);}
+  .guide-swatch{
+    width:34px; height:34px; border-radius:10px; margin-bottom:14px;
+    background:var(--wet);
+  }
+  .gc-dry .guide-swatch{background:var(--dry);}
+  .gc-recycle .guide-swatch{background:var(--recycle);}
+  .gc-hazard .guide-swatch{background:var(--hazard);}
+  .gc-general .guide-swatch{background:var(--general);}
+  .guide-card h4{font-family:var(--font-display); font-size:17px; font-weight:600; margin-bottom:4px;}
+  .guide-card .guide-bin{
+    font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--moss); font-weight:600; margin-bottom:10px; display:block;
+  }
+  .guide-card p{font-size:13px; color:#54594a; line-height:1.55;}
+  @media (max-width:900px){ .bin-guide{grid-template-columns:1fr 1fr;} }
+  @media (max-width:560px){ .bin-guide{grid-template-columns:1fr;} }
+
+  /* ---------- UPLOAD / CLASSIFIER ---------- */
+  .classifier{
+    background:linear-gradient(180deg, rgba(18,46,30,0.94), rgba(12,32,21,0.97));
+    color:var(--paper);
+  }
+  .classifier .sec-head p{color:rgba(239,242,232,0.7);}
+  .classifier .sec-tag{color:var(--lime);}
+  .classify-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:32px;
+    max-width:1180px; margin:0 auto;
+    align-items:start;
+  }
+  .drop-zone{
+    background:var(--pine-2);
+    border:2px dashed rgba(239,242,232,0.25);
+    border-radius:20px;
+    padding:40px 28px;
+    text-align:center;
+    transition:border-color 0.2s, background 0.2s;
+    cursor:pointer;
+  }
+  .drop-zone.drag{border-color:var(--lime); background:rgba(168,209,74,0.06);}
+  .drop-zone svg{margin:0 auto 16px; opacity:0.6;}
+  .drop-zone h4{font-family:var(--font-display); font-size:19px; margin-bottom:6px; font-weight:600;}
+  .drop-zone p{font-size:13.5px; color:rgba(239,242,232,0.55); margin-bottom:18px;}
+  .file-btn{
+    background:var(--lime); color:var(--pine);
+    padding:11px 22px; border-radius:100px; font-weight:700; font-size:14px;
+    display:inline-block;
+  }
+  #fileInput{display:none;}
+
+  .text-row{display:flex; gap:10px; margin-top:16px;}
+  .text-row input{
+    flex:1; background:rgba(239,242,232,0.08);
+    border:1px solid rgba(239,242,232,0.2);
+    border-radius:100px; padding:12px 18px;
+    color:var(--paper); font-family:var(--font-body); font-size:13.5px;
+  }
+  .text-row input::placeholder{color:rgba(239,242,232,0.4);}
+  .text-row input:focus{outline:none; border-color:var(--lime);}
+  .text-row button{
+    background:var(--lime); color:var(--pine);
+    padding:0 22px; border-radius:100px; font-weight:700; font-size:13.5px;
+    transition:background 0.2s;
+  }
+  .text-row button:hover{background:#bce369;}
+
+  .preview-box{margin-top:18px;}
+  .preview-box img{border-radius:14px; max-height:180px; object-fit:cover; width:100%;}
+
+  .result-panel{
+    background:linear-gradient(165deg, var(--card-1), var(--card-2));
+    color:var(--ink);
+    border-radius:20px; padding:30px;
+    border:1px solid rgba(18,46,30,0.08);
+    box-shadow:0 10px 26px rgba(18,46,30,0.08);
+    min-height:380px;
+    display:flex; flex-direction:column;
+  }
+  .result-empty{
+    margin:auto; text-align:center; color:#8a917f;
+  }
+  .result-empty svg{margin:0 auto 14px; opacity:0.5;}
+  .analyzing{margin:auto; text-align:center; width:100%;}
+  .scan-bar{
+    height:6px; background:#e3e8d9; border-radius:10px; overflow:hidden; margin:18px auto 0; max-width:260px;
+  }
+  .scan-fill{height:100%; width:0%; background:linear-gradient(90deg,var(--wet),var(--dry),var(--recycle)); transition:width 1.6s ease;}
+  .analyzing p{font-family:var(--font-mono); font-size:13px; color:var(--moss); margin-top:12px;}
+
+  .result-body{display:none;}
+  .result-body.show{display:block; animation:fadeUp 0.4s ease;}
+  @keyframes fadeUp{from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);}}
+
+  .cat-badge{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 16px; border-radius:100px;
+    font-weight:700; font-size:13px; color:white;
+    margin-bottom:18px;
+  }
+  .result-body h3{font-family:var(--font-display); font-size:26px; font-weight:600; margin-bottom:6px;}
+  .result-body .conf{font-family:var(--font-mono); font-size:12.5px; color:var(--moss); margin-bottom:20px;}
+  .result-rows{display:flex; flex-direction:column; gap:14px;}
+  .result-row{
+    display:flex; gap:12px; padding:14px; background:var(--paper); border-radius:12px;
+  }
+  .result-row .ic{font-size:20px; flex-shrink:0;}
+  .result-row b{display:block; font-size:13px; margin-bottom:3px;}
+  .result-row span{font-size:13.5px; color:#54594a; line-height:1.5;}
+
+  /* ---------- DASHBOARD ---------- */
+  .dash-grid{
+    display:grid; grid-template-columns:1.3fr 1fr; gap:24px;
+    max-width:1180px; margin:0 auto;
+  }
+  .dash-card{
+    background:linear-gradient(160deg, var(--card-1), var(--card-2));
+    border-radius:20px; padding:28px;
+    border:1px solid rgba(18,46,30,0.08);
+    box-shadow:0 6px 20px rgba(18,46,30,0.05);
+    transition:transform 0.25s, box-shadow 0.25s;
+  }
+  .dash-card:hover{transform:translateY(-4px); box-shadow:0 14px 26px rgba(18,46,30,0.1);}
+  .dash-card h3{font-family:var(--font-display); font-weight:600; font-size:18px; margin-bottom:20px;}
+  .breakdown-row{margin-bottom:16px;}
+  .breakdown-label{display:flex; justify-content:space-between; font-size:13px; font-weight:600; margin-bottom:6px;}
+  .bar-track{height:10px; background:var(--paper-2); border-radius:10px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:10px; width:0%; transition:width 0.8s ease;}
+  .bar-fill.wet{background:var(--wet);}
+  .bar-fill.dry{background:var(--dry);}
+  .bar-fill.recycle{background:var(--recycle);}
+  .bar-fill.hazard{background:var(--hazard);}
+  .bar-fill.general{background:var(--general);}
+
+  .side-stack{display:flex; flex-direction:column; gap:20px;}
+  .mini-stats{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .mini-stat{background:var(--paper); border-radius:14px; padding:16px;}
+  .mini-stat b{font-family:var(--font-mono); font-size:22px; display:block; color:var(--pine-2);}
+  .mini-stat span{font-size:12px; color:var(--moss); font-weight:600;}
+
+  .streak-row{display:flex; align-items:center; gap:14px;}
+  .streak-flames{display:flex; gap:4px;}
+  .streak-flames span{font-size:18px; opacity:0.25;}
+  .streak-flames span.lit{opacity:1;}
+  .points-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--pine); color:var(--paper);
+    border-radius:14px; padding:16px 18px;
+  }
+  .points-row b{font-family:var(--font-mono); font-size:22px; color:var(--lime);}
+
+  .tip-box{
+    background:var(--paper); border-radius:14px; padding:16px;
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .tip-box p{font-size:13.5px; line-height:1.55; color:#42482f;}
+  .tip-refresh{
+    font-family:var(--font-mono); font-size:11px; font-weight:600;
+    color:var(--moss); margin-top:10px; display:inline-flex; align-items:center; gap:5px;
+  }
+
+  /* ---------- IMPACT ---------- */
+  .impact{background:rgba(227,232,217,0.55); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);}
+  .impact-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:24px;
+    max-width:1180px; margin:0 auto;
+  }
+  .impact-card{
+    background:linear-gradient(160deg, var(--card-1), var(--card-2));
+    border-radius:20px; padding:30px; text-align:center;
+    border:1px solid rgba(18,46,30,0.08);
+    box-shadow:0 6px 20px rgba(18,46,30,0.05);
+    transition:transform 0.25s, box-shadow 0.25s;
+  }
+  .impact-card:hover{transform:translateY(-5px); box-shadow:0 14px 26px rgba(18,46,30,0.1);}
+  .impact-card .num{
+    font-family:var(--font-mono); font-size:38px; font-weight:600; color:var(--pine-2);
+  }
+  .impact-card .lbl{font-size:14px; color:var(--moss); font-weight:600; margin-top:6px;}
+  .impact-card p{font-size:13px; color:#6a7060; margin-top:12px; line-height:1.5;}
+
+  /* ---------- FOOTER ---------- */
+  footer{background:var(--pine); color:rgba(239,242,232,0.7); padding:60px 32px 30px;}
+  .foot-grid{
+    max-width:1180px; margin:0 auto; text-align:center;
+    padding-bottom:30px; border-bottom:1px solid rgba(239,242,232,0.12);
+  }
+  .foot-logo{font-family:var(--font-display); font-size:22px; color:var(--paper); margin-bottom:10px; font-weight:600;}
+  .foot-grid p{margin:0 auto; max-width:340px;}
+  .foot-bottom{
+    max-width:1180px; margin:0 auto; padding-top:24px;
+    text-align:center; font-size:13px;
+  }
+
+  /* scroll reveal */
+  .reveal{opacity:0; transform:translateY(24px); transition:opacity 0.6s ease, transform 0.6s ease;}
+  .reveal.in{opacity:1; transform:translateY(0);}
+
+  @media (max-width:900px){
+    .hero-inner{grid-template-columns:1fr;}
+    .steps{grid-template-columns:1fr;}
+    .classify-grid{grid-template-columns:1fr;}
+    .dash-grid{grid-template-columns:1fr;}
+    .impact-grid{grid-template-columns:1fr;}
+    .stats-grid{grid-template-columns:1fr 1fr;}
+    .stat{border-right:none; border-bottom:1px solid rgba(18,24,15,0.1); padding-bottom:14px; margin-bottom:14px;}
+    .nav-links{display:none;}
+    .burger{display:flex;}
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-scene" id="bgScene" aria-hidden="true">
+  <div class="blob blob-a"></div>
+  <div class="blob blob-b"></div>
+  <div class="blob blob-c"></div>
+  <div class="blob blob-d"></div>
+  <div class="grain"></div>
+</div>
+
+<header id="siteHeader">
+  <div class="nav" id="navBar">
+    <div class="logo"><span class="logo-dot"></span>Sortwise</div>
+    <ul class="nav-links">
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#bins">Bin guide</a></li>
+      <li><a href="#classify">Classifier</a></li>
+      <li><a href="#dashboard">Dashboard</a></li>
+      <li><a href="#impact">Impact</a></li>
+    </ul>
+    <a href="#classify" class="nav-cta">Try the classifier</a>
+    <div class="burger"><span></span><span></span><span></span></div>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow"><span class="eyebrow-dot"></span> AI-powered sorting</div>
+      <h1>Know which bin it belongs in, <em>before</em> you drop it.</h1>
+      <p class="lede">Snap a photo of any item and Sortwise tells you in seconds whether it's wet, dry, recyclable, hazardous, or general waste, then tells you exactly how to get rid of it.</p>
+      <div class="hero-actions">
+        <a href="#classify" class="btn-primary">Upload a photo →</a>
+        <a href="#how" class="btn-ghost">See how it works</a>
+      </div>
+    </div>
+    <div class="belt-box">
+      <div class="belt-title">Live sorting preview</div>
+      <div class="belt-track" id="beltTrack"></div>
+      <div class="bins-row">
+        <div class="bin wet" id="binWet"><span>🍌</span>Wet</div>
+        <div class="bin dry" id="binDry"><span>📦</span>Dry</div>
+        <div class="bin recycle" id="binRecycle"><span>♻️</span>Recycle</div>
+        <div class="bin hazard" id="binHazard"><span>☣️</span>Hazard</div>
+        <div class="bin general" id="binGeneral"><span>🗑️</span>General</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="stats-strip">
+  <div class="wrap stats-grid">
+    <div class="stat"><b id="statUsers">12,400+</b><span>Households onboard</span></div>
+    <div class="stat"><b id="statItems">380K</b><span>Items classified</span></div>
+    <div class="stat"><b>94.2%</b><span>Sorting accuracy</span></div>
+    <div class="stat"><b>61</b><span>Cities piloted in</span></div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="sec" id="how">
+  <div class="sec-head reveal">
+    <span class="sec-tag">🌿 Process</span>
+    <h2>Three steps, no guesswork</h2>
+    <p>No sign-up, no manual, no confusion at the bin. Just point, upload, and sort.</p>
+  </div>
+  <div class="steps">
+    <div class="step-card reveal">
+      <div class="step-num">01</div>
+      <h3>Snap or upload</h3>
+      <p>Take a photo of the item, or drag one in from your device. Works for food scraps, packaging, e-waste, anything.</p>
+    </div>
+    <div class="step-card reveal">
+      <div class="step-num">02</div>
+      <h3>AI classifies it</h3>
+      <p>Our model reads the image and matches it to a waste category in under two seconds, with a confidence score.</p>
+    </div>
+    <div class="step-card reveal">
+      <div class="step-num">03</div>
+      <h3>You get the bin</h3>
+      <p>See the exact bin colour, disposal steps, and a tip on why it matters — before you've even walked over.</p>
+    </div>
+  </div>
+</section>
+
+<!-- BIN GUIDE -->
+<section class="sec" id="bins">
+  <div class="sec-head reveal">
+    <span class="sec-tag">🌿 Bin guide</span>
+    <h2>Your five bins, decoded</h2>
+    <p>Every household and campus we've looked at uses some version of these five. Here's what actually goes where.</p>
+  </div>
+  <div class="bin-guide">
+    <div class="guide-card reveal">
+      <div class="guide-swatch"></div>
+      <span class="guide-bin">Green bin</span>
+      <h4>Wet Waste</h4>
+      <p>Anything that was alive or came out of the kitchen. Peels, leftovers, tea leaves, garden trimmings. This is what a compost pile actually wants.</p>
+    </div>
+    <div class="guide-card gc-dry reveal">
+      <div class="guide-swatch"></div>
+      <span class="guide-bin">Blue bin</span>
+      <h4>Dry Waste</h4>
+      <p>Paper, cardboard, and fabric that stays dry and won't rot. Newspapers, cereal boxes, old clothes that are better donated than dumped.</p>
+    </div>
+    <div class="guide-card gc-recycle reveal">
+      <div class="guide-swatch"></div>
+      <span class="guide-bin">Yellow bin</span>
+      <h4>Recyclable Waste</h4>
+      <p>Bottles, jars, cans, and packaging that can genuinely go through a recycling plant. Give it a rinse first, leftover food ruins a whole batch.</p>
+    </div>
+    <div class="guide-card gc-hazard reveal">
+      <div class="guide-swatch"></div>
+      <span class="guide-bin">Red bin</span>
+      <h4>Hazardous Waste</h4>
+      <p>Batteries, bulbs, old medicines, paint, anything electronic. Never toss these in with regular trash, they need a proper collection point.</p>
+    </div>
+    <div class="guide-card gc-general reveal">
+      <div class="guide-swatch"></div>
+      <span class="guide-bin">Black bin</span>
+      <h4>General Waste</h4>
+      <p>What's left over. Broken ceramics, styrofoam, sanitary items, anything that can't be composted or recycled through normal channels.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CLASSIFIER -->
+<section class="sec classifier" id="classify">
+  <div class="sec-head reveal">
+    <span class="sec-tag">🌿 Try it now</span>
+    <h2>Upload an item, get an instant verdict</h2>
+    <p>This demo runs on a simulated model tuned on common household waste. The same interface plugs into a real vision model in production.</p>
+  </div>
+  <div class="classify-grid">
+    <div class="reveal">
+      <div class="drop-zone" id="dropZone">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#EFF2E8" stroke-width="1.5"><path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h4>Drop a waste photo here</h4>
+        <p>or use the button below · JPG, PNG</p>
+        <label class="file-btn" for="fileInput">Choose photo</label>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+      <div class="text-row">
+        <input type="text" id="textInput" placeholder="Not uploading a photo? Just type what it's made of, like wool or glass">
+        <button id="textBtn">Classify</button>
+      </div>
+      <div class="preview-box" id="previewBox"></div>
+    </div>
+
+    <div class="result-panel">
+      <div class="result-empty" id="resultEmpty">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#8a917f" stroke-width="1.4"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3" stroke-linecap="round"/></svg>
+        <p>Your result will show up here</p>
+      </div>
+      <div class="analyzing" id="analyzing" style="display:none;">
+        <div style="font-family:var(--font-mono); font-size:13px; color:var(--pine-2); font-weight:600;">Analyzing image…</div>
+        <div class="scan-bar"><div class="scan-fill" id="scanFill"></div></div>
+        <p id="scanStep">reading pixels</p>
+      </div>
+      <div class="result-body" id="resultBody">
+        <div class="cat-badge" id="catBadge">Wet Waste</div>
+        <h3 id="itemName">Banana peel</h3>
+        <div class="conf" id="confText">confidence 96.4%</div>
+        <div class="result-rows">
+          <div class="result-row"><div class="ic">🗑️</div><div><b>Bin</b><span id="binText">Green bin</span></div></div>
+          <div class="result-row"><div class="ic">📋</div><div><b>Disposal</b><span id="dispText">Compost within 24 hours to avoid odour.</span></div></div>
+          <div class="result-row"><div class="ic">🌱</div><div><b>Why it matters</b><span id="tipText">Wet waste makes up 50%+ of landfill volume — composting it cuts methane emissions.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section class="sec" id="dashboard">
+  <div class="sec-head reveal">
+    <span class="sec-tag">🌿 Your activity</span>
+    <h2>A running picture of your sorting habits</h2>
+    <p>Every photo you classify here updates this dashboard live.</p>
+  </div>
+  <div class="dash-grid">
+    <div class="dash-card reveal">
+      <h3>Category breakdown</h3>
+      <div class="breakdown-row">
+        <div class="breakdown-label"><span>Wet waste</span><span id="pctWet">0%</span></div>
+        <div class="bar-track"><div class="bar-fill wet" id="barWet"></div></div>
+      </div>
+      <div class="breakdown-row">
+        <div class="breakdown-label"><span>Dry waste</span><span id="pctDry">0%</span></div>
+        <div class="bar-track"><div class="bar-fill dry" id="barDry"></div></div>
+      </div>
+      <div class="breakdown-row">
+        <div class="breakdown-label"><span>Recyclable</span><span id="pctRecycle">0%</span></div>
+        <div class="bar-track"><div class="bar-fill recycle" id="barRecycle"></div></div>
+      </div>
+      <div class="breakdown-row">
+        <div class="breakdown-label"><span>Hazardous</span><span id="pctHazard">0%</span></div>
+        <div class="bar-track"><div class="bar-fill hazard" id="barHazard"></div></div>
+      </div>
+      <div class="breakdown-row">
+        <div class="breakdown-label"><span>General waste</span><span id="pctGeneral">0%</span></div>
+        <div class="bar-track"><div class="bar-fill general" id="barGeneral"></div></div>
+      </div>
+      <div class="mini-stats" style="margin-top:24px;">
+        <div class="mini-stat"><b id="totalItems">0</b><span>Items classified</span></div>
+        <div class="mini-stat"><b id="accRate">—</b><span>Avg. confidence</span></div>
+      </div>
+    </div>
+
+    <div class="side-stack">
+      <div class="dash-card reveal points-row" style="margin:0; flex-direction:column; align-items:flex-start; gap:10px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+          <div>
+            <div style="font-size:12px; color:rgba(239,242,232,0.6); font-weight:600;">REWARD POINTS</div>
+            <b id="pointsVal">0</b>
+          </div>
+          <div style="font-size:24px;">🏆</div>
+        </div>
+        <p style="font-size:12.5px; color:rgba(239,242,232,0.6); line-height:1.5;">Earn 10–25 points every time you classify an item. Points will unlock real rewards from local recycling partners.</p>
+      </div>
+      <div class="dash-card reveal">
+        <h3 style="margin-bottom:6px;">Sorting streak</h3>
+        <p style="font-size:12.5px; color:#6a7060; margin-bottom:14px; line-height:1.5;">Classify at least one item a day to keep your streak alive — miss a day and it resets.</p>
+        <div class="streak-row">
+          <div class="streak-flames" id="flames">
+            <span class="lit">🔥</span><span class="lit">🔥</span><span class="lit">🔥</span><span>🔥</span><span>🔥</span>
+          </div>
+          <span style="font-size:13px; color:var(--moss); font-weight:600;" id="streakTxt">3-day streak</span>
+        </div>
+        <div class="bar-track" style="margin-top:12px;">
+          <div class="bar-fill" style="width:60%; background:var(--lime);"></div>
+        </div>
+        <p style="font-size:11.5px; color:#8a917f; margin-top:6px;">2 more days to unlock the 5-day badge</p>
+      </div>
+      <div class="dash-card reveal">
+        <h3 style="margin-bottom:12px;">Did you know?</h3>
+        <div class="tip-box">
+          <div style="font-size:20px;">💡</div>
+          <p id="ecoTip">A single plastic bottle can take up to 450 years to decompose in a landfill.</p>
+        </div>
+        <button class="tip-refresh" id="tipBtn">↻ Show another tip</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- IMPACT -->
+<section class="sec impact" id="impact">
+  <div class="sec-head reveal">
+    <span class="sec-tag">🌿 Estimated impact</span>
+    <h2>What good sorting adds up to</h2>
+    <p>Projected figures based on average household waste composition data.</p>
+  </div>
+  <div class="impact-grid">
+    <div class="impact-card reveal">
+      <div class="num">2.1 kg</div>
+      <div class="lbl">CO₂e avoided per week</div>
+      <p>By keeping recyclables out of landfill and wet waste out of incineration.</p>
+    </div>
+    <div class="impact-card reveal">
+      <div class="num">18 L</div>
+      <div class="lbl">Water saved per week</div>
+      <p>Cleaner recycling streams need less processing and rinsing downstream.</p>
+    </div>
+    <div class="impact-card reveal">
+      <div class="num">6.8 kg</div>
+      <div class="lbl">Wood saved per month</div>
+      <p>Estimated raw-wood equivalent, based on correctly recycled paper and cardboard volume.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-grid">
+    <div class="foot-logo">Sortwise</div>
+    <p style="font-size:14px;">AI-guided waste segregation for homes, schools, and small businesses.</p>
+  </div>
+  <div class="foot-bottom">
+    <span>© 2026 Sortwise · Aditi Prakash Rane</span>
+  </div>
+</footer>
+
+<script>
+// ---- demo data: keyword map for the fake classifier ----
+var wasteDb = [
+  {keys:["banana","peel","apple","fruit","veg","vegetable","food","leaf","tea","coffee","eggshell","scrap"], cat:"wet", name:"Food scraps", bin:"Green bin", disp:"Compost within 24 hours to avoid odour and pests.", tip:"Wet waste makes up over 50% of landfill volume, composting it cuts methane emissions."},
+  {keys:["cardboard","carton","box","corrugated"], cat:"dry", name:"Cardboard", bin:"Blue bin", disp:"Flatten and keep dry before placing in the bin.", tip:"A cardboard box can be recycled 5 to 7 times before its fibres wear out."},
+  {keys:["paper","newspaper","magazine","notebook","tissue","book","envelope"], cat:"dry", name:"Paper", bin:"Blue bin", disp:"Keep dry and bundle loosely before recycling.", tip:"Recycled paper uses 60% less energy than making paper from raw wood pulp."},
+  {keys:["wool","fabric","cloth","textile","sweater","cotton","yarn","clothes","sock","fibre"], cat:"dry", name:"Wool or fabric waste", bin:"Blue bin", disp:"Donate if still usable, otherwise place with dry waste, most kerbside recycling can't process mixed fabric.", tip:"Textile waste is one of the most under-recycled categories, donating extends an item's life far more than binning it."},
+  {keys:["plastic","wrapper","bag","pet","straw","cup","polythene"], cat:"recycle", name:"Plastic packaging", bin:"Yellow bin", disp:"Rinse off residue and remove the cap before recycling.", tip:"A single plastic bottle can take up to 450 years to decompose in a landfill."},
+  {keys:["bottle"], cat:"recycle", name:"Plastic bottle", bin:"Yellow bin", disp:"Rinse, crush, and screw the cap back on before recycling.", tip:"91% of plastic ever made has never actually been recycled."},
+  {keys:["glass","jar"], cat:"recycle", name:"Glass item", bin:"Yellow bin", disp:"Rinse and place separately, glass can be recycled endlessly.", tip:"Recycled glass melts at a lower temperature, saving energy every time it's reused."},
+  {keys:["battery","bulb","paint","chemical","medicine","e-waste","ewaste","electronic","wire","charger","cable","circuit","gadget","earphone","laptop","phone"], cat:"hazard", name:"Hazardous or e-waste item", bin:"Red bin", disp:"Do not mix with household waste, drop at a designated e-waste or hazardous collection point.", tip:"A single battery can contaminate up to 600,000 litres of groundwater if dumped."},
+  {keys:["metal","can","tin","foil","steel"], cat:"recycle", name:"Metal container", bin:"Yellow bin", disp:"Rinse and crush lightly to save space before recycling.", tip:"Recycling aluminium uses 95% less energy than producing it from raw ore."},
+  {keys:["diaper","napkin","sanitary","cigarette","styrofoam","thermocol","ceramic","mirror","dust","ash","broken"], cat:"general", name:"Non-recyclable general waste", bin:"Black bin", disp:"Bag it separately, this can't be composted or recycled through normal streams.", tip:"Keeping true residual waste out of the other bins means less contamination and cleaner recycling overall."},
+  {keys:["injection","syringe","needle","gloves","glove","medical","surgical","biohazard","biomedical","bandage","mask","ppe","blood","scalpel","vial","swab","dressing","catheter","plaster","nitrile","latex"], cat:"hazard", name:"Medical or biohazard waste", bin:"Red bin", disp:"Never mix with regular trash or recycling. Seal it separately and hand it in at a medical waste, hospital, or pharmacy collection point.", tip:"Improperly discarded medical waste like needles and gloves can spread infection to sanitation workers and contaminate everything else in the bin."}
+];
+
+var catInfo = {
+  wet:{label:"Wet Waste", color:"var(--wet)"},
+  dry:{label:"Dry Waste", color:"var(--dry)"},
+  recycle:{label:"Recyclable Waste", color:"var(--recycle)"},
+  hazard:{label:"Hazardous Waste", color:"var(--hazard)"},
+  general:{label:"General Waste", color:"var(--general)"}
+};
+
+var ecoTips = [
+  "A single plastic bottle can take up to 450 years to decompose in a landfill.",
+  "Composting food scraps can cut a household's landfill waste by nearly a third.",
+  "Glass is 100% recyclable and can be reused endlessly without losing quality.",
+  "One recycled aluminium can saves enough energy to run a TV for three hours.",
+  "Mixing wet and dry waste makes both harder and costlier to recycle later.",
+  "E-waste is the fastest growing waste stream in the world, so always sort it separately.",
+  "Recycling one tonne of paper saves around 17 trees and thousands of litres of water.",
+  "It takes roughly 500 years for a disposable diaper to break down in a landfill.",
+  "Food waste in landfills produces methane, a gas over 25 times more potent than CO2.",
+  "Around 91% of plastic ever made has never actually been recycled.",
+  "A used cardboard box can be recycled 5 to 7 times before its fibres wear out.",
+  "Steel is the most recycled material on the planet, more than paper, glass, and plastic combined.",
+  "Rinsing containers before recycling prevents food residue from contaminating an entire batch.",
+  "Composting turns kitchen scraps into nutrient-rich soil in as little as 6 to 8 weeks.",
+  "Nearly 8 million tonnes of plastic enter the ocean every year.",
+  "Old clothes and fabric can often be donated or repurposed instead of thrown away.",
+  "A dripping tap can waste over 3,000 litres of water a year if left unfixed.",
+  "Batteries contain heavy metals that can leach into soil and groundwater if dumped carelessly.",
+  "Recycled glass reduces air pollution from manufacturing by around 20% compared to new glass.",
+  "Cooking oil should never go down the drain, it clogs pipes and pollutes water systems.",
+  "Cigarette butts are one of the most littered items worldwide and take years to decompose.",
+  "Reusing a shopping bag just a handful of times offsets the resources used to make it.",
+  "Electronics contain gold, silver, and copper that can be recovered through proper e-waste recycling.",
+  "Home composting can reduce a household's carbon footprint by several hundred kilograms a year.",
+  "Keeping wet waste separate stops it from soaking and ruining otherwise recyclable paper and cardboard."
+];
+
+// dashboard state, kept simple in memory
+var counts = {wet:0, dry:0, recycle:0, hazard:0, general:0};
+var points = 0;
+var confSum = 0;
+var confCount = 0;
+
+// looks at filename or typed text first, and if nothing matches, looks at the actual photo colors
+// hazardous and medical items are checked before anything else, since getting those
+// wrong matters more than mixing up paper and cardboard
+function pickWaste(fname, avgColor){
+  var f = (fname || "").toLowerCase();
+
+  for(var h=0; h<wasteDb.length; h++){
+    if(wasteDb[h].cat === "hazard"){
+      for(var hk=0; hk<wasteDb[h].keys.length; hk++){
+        if(f.indexOf(wasteDb[h].keys[hk]) !== -1) return wasteDb[h];
+      }
+    }
+  }
+
+  for(var i=0;i<wasteDb.length;i++){
+    var item = wasteDb[i];
+    if(item.cat === "hazard") continue; // already checked above
+    for(var j=0;j<item.keys.length;j++){
+      if(f.indexOf(item.keys[j]) !== -1) return item;
+    }
+  }
+
+  if(avgColor) return colorGuess(avgColor);
+  return wasteDb[Math.floor(Math.random()*wasteDb.length)];
+}
+
+// draws the photo onto a tiny canvas and reads back average color plus contrast
+// contrast helps tell a matte item (paper, cardboard) apart from a glossy one (bottle, glass)
+function getAvgColor(img){
+  var c = document.createElement('canvas');
+  c.width = 24; c.height = 24;
+  var ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0, 24, 24);
+  var data;
+  try{
+    data = ctx.getImageData(0, 0, 24, 24).data;
+  }catch(err){
+    return null; // some browsers block this for local files, that's fine
+  }
+  var r=0, g=0, b=0, n=0;
+  var brightVals = [];
+  for(var i=0; i<data.length; i+=4){
+    r += data[i]; g += data[i+1]; b += data[i+2]; n++;
+    brightVals.push((data[i] + data[i+1] + data[i+2]) / 3);
+  }
+  var avgR = r/n, avgG = g/n, avgB = b/n;
+  var avgBright = (avgR + avgG + avgB) / 3;
+  var sqDiff = 0;
+  for(var k=0; k<brightVals.length; k++){ sqDiff += Math.pow(brightVals[k] - avgBright, 2); }
+  var contrast = Math.sqrt(sqDiff / brightVals.length);
+  return {r:avgR, g:avgG, b:avgB, contrast:contrast};
+}
+
+// turns average color + contrast into a plausible waste category
+function colorGuess(c){
+  var bright = (c.r + c.g + c.b) / 3;
+  var sat = Math.max(c.r,c.g,c.b) - Math.min(c.r,c.g,c.b);
+  var contrast = c.contrast || 0;
+
+  // glossy, reflective surfaces (bottles, jars) tend to show high local contrast
+  // from highlights and shadows even when the overall photo looks pale
+  if(contrast > 42 && bright > 110){
+    return bright > 195 ? wasteDb[5] : wasteDb[6]; // bright + glossy = clear bottle, else glass
+  }
+  // flat, pale, low-contrast surfaces read as paper, cardboard, or fabric
+  if(bright > 175 && sat < 40 && contrast <= 42){
+    return c.r > c.b + 15 ? wasteDb[1] : wasteDb[2];
+  }
+  // greenish or earthy tones tend to be food scraps
+  if(c.g >= c.r - 10 && c.g >= c.b && bright > 55 && bright < 200){
+    return wasteDb[0];
+  }
+  // very dark, low-light photos read as hazardous or electronic items
+  if(bright < 65){
+    return wasteDb[7];
+  }
+  // flat mid-grey tones with barely any color read as general/residual waste
+  if(sat < 18 && bright >= 65 && bright <= 175 && contrast < 30){
+    return wasteDb[9];
+  }
+  // cool, bluish tones read as plastic packaging
+  if(c.b >= c.r){
+    return wasteDb[4];
+  }
+  // default: metal / general recyclable
+  return wasteDb[8];
+}
+
+var dropZone = document.getElementById('dropZone');
+var fileInput = document.getElementById('fileInput');
+var previewBox = document.getElementById('previewBox');
+var resultEmpty = document.getElementById('resultEmpty');
+var analyzing = document.getElementById('analyzing');
+var scanFill = document.getElementById('scanFill');
+var scanStep = document.getElementById('scanStep');
+var resultBody = document.getElementById('resultBody');
+
+dropZone.addEventListener('click', function(){ fileInput.click(); });
+dropZone.addEventListener('dragover', function(e){ e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', function(){ dropZone.classList.remove('drag'); });
+dropZone.addEventListener('drop', function(e){
+  e.preventDefault();
+  dropZone.classList.remove('drag');
+  if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', function(){
+  if(fileInput.files.length) handleFile(fileInput.files[0]);
+});
+
+function handleFile(file){
+  var url = URL.createObjectURL(file);
+  previewBox.innerHTML = '<div class="preview-box"><img src="' + url + '" alt="uploaded waste photo"></div>';
+
+  resultEmpty.style.display = 'none';
+  resultBody.classList.remove('show');
+  analyzing.style.display = 'block';
+  scanFill.style.width = '0%';
+
+  var steps = ["reading pixels", "matching visual pattern", "checking material type", "finalizing category"];
+  var stepIdx = 0;
+  scanStep.textContent = steps[0];
+  var stepTimer = setInterval(function(){
+    stepIdx++;
+    if(stepIdx < steps.length) scanStep.textContent = steps[stepIdx];
+  }, 400);
+
+  setTimeout(function(){ scanFill.style.width = '100%'; }, 50);
+
+  // load the actual photo so the color heuristic has something to look at
+  var img = new Image();
+  var avgColor = null;
+  img.onload = function(){ avgColor = getAvgColor(img); };
+  img.src = url;
+
+  setTimeout(function(){
+    clearInterval(stepTimer);
+    var res = pickWaste(file.name, avgColor);
+    showResult(res);
+    bumpBin(res.cat);
+    analyzing.style.display = 'none';
+    resultBody.classList.add('show');
+  }, 1700);
+}
+
+function showResult(res){
+  var info = catInfo[res.cat];
+  var badge = document.getElementById('catBadge');
+  badge.textContent = info.label;
+  badge.style.background = info.color;
+
+  document.getElementById('itemName').textContent = res.name;
+  var conf = (88 + Math.random()*11).toFixed(1);
+  document.getElementById('confText').textContent = 'confidence ' + conf + '%';
+  document.getElementById('binText').textContent = res.bin;
+  document.getElementById('dispText').textContent = res.disp;
+  document.getElementById('tipText').textContent = res.tip;
+
+  counts[res.cat]++;
+  points += Math.floor(10 + Math.random()*15);
+  confSum += parseFloat(conf);
+  confCount++;
+  updateDashboard();
+}
+
+function updateDashboard(){
+  var total = counts.wet + counts.dry + counts.recycle + counts.hazard;
+  document.getElementById('totalItems').textContent = total;
+  document.getElementById('pointsVal').textContent = points;
+  document.getElementById('accRate').textContent = confCount ? (confSum/confCount).toFixed(1) + '%' : '—';
+
+  var cats = ['wet','dry','recycle','hazard','general'];
+  for(var i=0;i<cats.length;i++){
+    var c = cats[i];
+    var pct = total ? Math.round((counts[c]/total)*100) : 0;
+    document.getElementById('bar' + capitalize(c)).style.width = pct + '%';
+    document.getElementById('pct' + capitalize(c)).textContent = pct + '%';
+  }
+}
+function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function bumpBin(cat){
+  var map = {wet:'binWet', dry:'binDry', recycle:'binRecycle', hazard:'binHazard', general:'binGeneral'};
+  var el = document.getElementById(map[cat]);
+  el.classList.remove('pulse');
+  void el.offsetWidth; // restart animation
+  el.classList.add('pulse');
+}
+
+// ---- classify by typed description instead of a photo ----
+var textInput = document.getElementById('textInput');
+var textBtn = document.getElementById('textBtn');
+function classifyText(){
+  var val = textInput.value.trim();
+  if(!val) return;
+  resultEmpty.style.display = 'none';
+  resultBody.classList.remove('show');
+  analyzing.style.display = 'block';
+  scanStep.textContent = 'reading your description';
+  scanFill.style.width = '0%';
+  setTimeout(function(){ scanFill.style.width = '100%'; }, 50);
+  setTimeout(function(){
+    var res = pickWaste(val, null);
+    showResult(res);
+    bumpBin(res.cat);
+    analyzing.style.display = 'none';
+    resultBody.classList.add('show');
+    textInput.value = '';
+  }, 900);
+}
+textBtn.addEventListener('click', classifyText);
+textInput.addEventListener('keydown', function(e){
+  if(e.key === 'Enter') classifyText();
+});
+
+// ---- eco tip generator ----
+var tipBtn = document.getElementById('tipBtn');
+var ecoTip = document.getElementById('ecoTip');
+tipBtn.addEventListener('click', function(){
+  var pick = ecoTips[Math.floor(Math.random()*ecoTips.length)];
+  ecoTip.style.opacity = 0;
+  setTimeout(function(){
+    ecoTip.textContent = pick;
+    ecoTip.style.opacity = 1;
+  }, 200);
+});
+ecoTip.style.transition = 'opacity 0.2s';
+
+// ---- hero belt animation: spawn drifting items ----
+var beltItems = ["🍌","📦","♻️","🔋","🍎","🧴","📰","🥫"];
+var beltTrack = document.getElementById('beltTrack');
+function spawnItem(){
+  var chip = document.createElement('div');
+  chip.className = 'item-chip';
+  chip.textContent = beltItems[Math.floor(Math.random()*beltItems.length)];
+  chip.style.background = 'rgba(239,242,232,0.1)';
+  chip.style.animationDuration = (5 + Math.random()*2) + 's';
+  beltTrack.appendChild(chip);
+  setTimeout(function(){ chip.remove(); }, 7000);
+}
+spawnItem();
+setInterval(spawnItem, 1400);
+
+// ---- header turns more solid once you scroll past the hero ----
+var siteHeader = document.getElementById('siteHeader');
+window.addEventListener('scroll', function(){
+  if(window.scrollY > 60) siteHeader.classList.add('scrolled');
+  else siteHeader.classList.remove('scrolled');
+});
+
+// ---- background scene drifts a little with the mouse ----
+var bgScene = document.getElementById('bgScene');
+var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(bgScene && !reduceMotion){
+  window.addEventListener('mousemove', function(e){
+    var x = (e.clientX / window.innerWidth - 0.5) * 24;
+    var y = (e.clientY / window.innerHeight - 0.5) * 24;
+    bgScene.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+  });
+}
+
+// ---- scroll reveal ----
+var revealEls = document.querySelectorAll('.reveal');
+var obs = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    if(e.isIntersecting) e.target.classList.add('in');
+  });
+}, {threshold:0.15});
+revealEls.forEach(function(el){ obs.observe(el); });
+
+// ---- little starter animation for the stat counters ----
+window.addEventListener('load', function(){
+  updateDashboard();
+});
+</script>
+</body>
+</html>
